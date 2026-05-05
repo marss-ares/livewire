@@ -1,15 +1,13 @@
 <div>
     <header class="relative mb-6 flex flex-col gap-4">
         <div class="flex items-center justify-between w-full">
-            <div class="flex items-center gap-2">
-                <flux:heading size="xl" level="1" class="!font-bold tracking-tight">
-                    Users
-                </flux:heading>
-            </div>
+            <flux:heading size="xl" level="1" class="!font-bold tracking-tight">
+                Users
+            </flux:heading>
 
             <div class="flex-none">
-                <flux:input size="sm" icon="magnifying-glass" placeholder="Search user..." wire:model.live="search"
-                    class="w-64" />
+                <flux:input size="sm" icon="magnifying-glass" placeholder="Search users..." wire:model.live="search"
+                    class="w-64 flex-none" />
             </div>
         </div>
 
@@ -27,31 +25,52 @@
         </div>
     </header>
 
-    @php
-        $headers = [['label' => 'Name'], ['label' => 'Email'], ['label' => 'Actions', 'class' => 'text-right']];
-    @endphp
-
     <div
         class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm">
-        <x-table :headers="$headers" :rows="$users">
-            @foreach ($users as $user)
-                <tr wire:key="user-{{ $user->id }}"
-                    class="hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors border-b border-zinc-100 dark:border-zinc-700/50 last:border-0">
-                    <td class="px-6 py-4 whitespace-nowrap font-medium text-zinc-900 dark:text-zinc-100">
-                        {{ $user->name }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-zinc-600 dark:text-zinc-400">
-                        {{ $user->email }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right">
-                        <flux:button variant="ghost" size="xs" icon="pencil" circle
-                            wire:click="$dispatch('openEditModal', { user: {{ $user->id }} })" />
-                        <flux:button variant="ghost" size="xs" icon="trash" circle
-                            wire:click="$dispatch('openDeleteModal', { user: {{ $user->id }} })" />
-                    </td>
+        <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
+            <thead class="bg-zinc-50 dark:bg-zinc-900/50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Email</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Roles</th>
+                    <th class="px-6 py-3 text-right text-xs font-semibold text-zinc-500 uppercase tracking-wider">Actions</th>
                 </tr>
-            @endforeach
-        </x-table>
+            </thead>
+            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700/50">
+                @forelse ($users as $user)
+                    <tr wire:key="user-{{ $user->id }}"
+                        class="hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap font-medium text-zinc-900 dark:text-zinc-100">
+                            {{ $user->name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-zinc-600 dark:text-zinc-400">
+                            {{ $user->email }}
+                        </td>
+                        <td class="px-6 py-4">
+                            @if($user->role)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                                    {{ $user->role->name }}
+                                </span>
+                            @else
+                                <span class="text-xs text-zinc-400">—</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <flux:button variant="ghost" size="xs" icon="pencil" circle
+                                wire:click="$dispatch('openEditModal', { user: {{ $user->id }} })" />
+                            <flux:button variant="ghost" size="xs" icon="trash" circle
+                                wire:click="$dispatch('openDeleteModal', { user: {{ $user->id }} })" />
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center text-zinc-400">
+                            No users found.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
 
     <div class="mt-4">

@@ -17,6 +17,7 @@ class UsersIndex extends Component
     public function render()
     {
         $users = User::query()
+            ->with('role')
             ->when($this->search, function ($query) {
                 $query->where('name', 'like', '%'.$this->search.'%')
                     ->orWhere('email', 'like', '%'.$this->search.'%');

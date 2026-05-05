@@ -20,26 +20,25 @@
                     {{ __('Dashboard') }}
                 </flux:sidebar.item>
 
-                <flux:sidebar.item icon="user-group" :href="route('users.index')" :current="request()->routeIs('users.index')"
-                    wire:navigate>
-                    {{ __('Users') }}
-                </flux:sidebar.item>
-
             </flux:sidebar.group>
         </flux:sidebar.nav>
 
         <flux:spacer />
 
         <flux:sidebar.nav>
-            <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')"
+            @if(auth()->user()->hasPermission('users.view'))
+            <flux:sidebar.item icon="user-group" :href="route('users.index')" :current="request()->routeIs('users.index')"
                 wire:navigate>
-                {{ __('Dashboard') }}
+                {{ __('Users') }}
             </flux:sidebar.item>
+            @endif
 
-            <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire"
-                target="_blank">
-                {{ __('Documentation') }}
+            @if(auth()->user()->hasPermission('roles.view'))
+            <flux:sidebar.item icon="shield-check" :href="route('roles.index')" :current="request()->routeIs('roles.index')"
+                wire:navigate>
+                {{ __('Roles') }}
             </flux:sidebar.item>
+            @endif
         </flux:sidebar.nav>
 
         <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
