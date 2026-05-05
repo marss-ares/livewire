@@ -14,7 +14,9 @@
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "livewire/flux": "*",
-        "livewire/livewire": "*"
+        "livewire/livewire": "*",
+        "maatwebsite/excel": "*",
+        "phpoffice/phpspreadsheet": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",

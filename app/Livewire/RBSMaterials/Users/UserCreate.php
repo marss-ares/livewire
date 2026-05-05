@@ -18,29 +18,33 @@ class UserCreate extends Component
 
     public function open(): void
     {
+        abort_if(!auth()->user()->hasPermission('users.create'), 403);
+
         $this->reset(['name', 'email', 'password', 'roleId']);
         $this->showModal = true;
     }
 
     public function save(): void
     {
+        abort_if(!auth()->user()->hasPermission('users.create'), 403);
+
         $this->validate([
             'name'     => 'required|min:3',
             'email'    => 'required|email|unique:users,email',
             'password' => 'required|min:6',
-            'roleId'   => 'nullable|exists:roles,id',
+            'roleId'   => 'required|exists:roles,id',
         ]);
 
-        $user = User::create([
+        User::create([
             'name'     => $this->name,
             'email'    => $this->email,
             'password' => bcrypt($this->password),
-            'role_id'  => $this->roleId ?: null,
+            'role_id'  => $this->roleId,
         ]);
 
         $this->showModal = false;
         $this->dispatch('user-updated');
-        $this->dispatch('toast', message: 'User creat cu succes!');
+        $this->dispatch('toast', message: 'User created successfully!');
     }
 
     public function render()

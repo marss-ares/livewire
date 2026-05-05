@@ -4,6 +4,7 @@ namespace App\Livewire\RBSMaterials\Roles;
 
 use App\Models\Permission;
 use App\Models\Role;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class RoleCreate extends Component
@@ -18,17 +19,21 @@ class RoleCreate extends Component
 
     public function open(): void
     {
+        abort_if(!auth()->user()->hasPermission('roles.create'), 403);
+
         $this->reset(['name', 'slug', 'description', 'selectedPermissions']);
         $this->showModal = true;
     }
 
     public function updatedName(string $value): void
     {
-        $this->slug = \Illuminate\Support\Str::slug($value);
+        $this->slug = Str::slug($value);
     }
 
     public function save(): void
     {
+        abort_if(!auth()->user()->hasPermission('roles.create'), 403);
+
         $this->validate([
             'name'        => 'required|min:2|max:100',
             'slug'        => 'required|unique:roles,slug|regex:/^[a-z0-9\-]+$/',
@@ -45,16 +50,13 @@ class RoleCreate extends Component
 
         $this->showModal = false;
         $this->dispatch('role-updated');
-        $this->dispatch('toast', message: 'Rol creat cu succes!');
+        $this->dispatch('toast', message: 'Role created successfully!');
     }
 
     public function render()
     {
-        $permissions = Permission::orderBy('category')->orderBy('name')->get()
-            ->groupBy('category');
-
         return view('RBSMaterials.Roles.role-create', [
-            'permissionsByCategory' => $permissions,
+            'permissionsByCategory' => Permission::orderBy('category')->orderBy('name')->get()->groupBy('category'),
         ]);
     }
 }

@@ -20,25 +20,39 @@
                     {{ __('Dashboard') }}
                 </flux:sidebar.item>
 
+                <flux:sidebar.item icon="document-text" :href="route('forms.index')"
+                    :current="request()->routeIs('forms.*')" wire:navigate>
+                    {{ __('Forms') }}
+                </flux:sidebar.item>
+
             </flux:sidebar.group>
         </flux:sidebar.nav>
 
         <flux:spacer />
 
         <flux:sidebar.nav>
-            @if(auth()->user()->hasPermission('users.view'))
-            <flux:sidebar.item icon="user-group" :href="route('users.index')" :current="request()->routeIs('users.index')"
-                wire:navigate>
-                {{ __('Users') }}
-            </flux:sidebar.item>
+            @if (auth()->user()->hasPermission('users.view'))
+                <flux:sidebar.item icon="user-group" :href="route('users.index')"
+                    :current="request()->routeIs('users.index')" wire:navigate>
+                    {{ __('Users') }}
+                </flux:sidebar.item>
             @endif
 
-            @if(auth()->user()->hasPermission('roles.view'))
-            <flux:sidebar.item icon="shield-check" :href="route('roles.index')" :current="request()->routeIs('roles.index')"
-                wire:navigate>
-                {{ __('Roles') }}
-            </flux:sidebar.item>
+            @if (auth()->user()->hasPermission('roles.view'))
+                <flux:sidebar.item icon="shield-check" :href="route('roles.index')"
+                    :current="request()->routeIs('roles.index')" wire:navigate>
+                    {{ __('Roles') }}
+                </flux:sidebar.item>
             @endif
+
+            @if (auth()->user()->hasPermission('statuses.view'))
+                <flux:sidebar.item icon="tag" :href="route('statuses.index')"
+                    :current="request()->routeIs('statuses.*')" wire:navigate>
+                    {{ __('Statuses') }}
+                </flux:sidebar.item>
+            @endif
+
+
         </flux:sidebar.nav>
 
         <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />

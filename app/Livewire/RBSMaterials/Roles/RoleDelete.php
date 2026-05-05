@@ -15,25 +15,29 @@ class RoleDelete extends Component
 
     public function open(int $role): void
     {
+        abort_if(!auth()->user()->hasPermission('roles.delete'), 403);
+
         $r = Role::findOrFail($role);
 
         if ($r->slug === 'admin') {
-            $this->dispatch('toast', message: 'Admin role cannot be deleted');
+            $this->dispatch('toast', message: 'Admin role cannot be deleted.');
             return;
         }
 
-        $this->roleId   = $r->id;
-        $this->roleName = $r->name;
+        $this->roleId    = $r->id;
+        $this->roleName  = $r->name;
         $this->showModal = true;
     }
 
     public function delete(): void
     {
+        abort_if(!auth()->user()->hasPermission('roles.delete'), 403);
+
         Role::findOrFail($this->roleId)->delete();
 
         $this->showModal = false;
         $this->dispatch('role-updated');
-        $this->dispatch('toast', message: 'Rol șters cu succes!');
+        $this->dispatch('toast', message: 'Role deleted successfully!');
     }
 
     public function render()

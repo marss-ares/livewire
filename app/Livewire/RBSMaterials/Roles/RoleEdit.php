@@ -19,23 +19,27 @@ class RoleEdit extends Component
 
     public function open(int $role): void
     {
+        abort_if(!auth()->user()->hasPermission('roles.edit'), 403);
+
         $r = Role::with('permissions')->findOrFail($role);
 
         if ($r->slug === 'admin') {
-            $this->dispatch('toast', message: 'Admin role cannot be edited');
+            $this->dispatch('toast', message: 'Admin role cannot be edited.');
             return;
         }
 
-        $this->roleId             = $r->id;
-        $this->name               = $r->name;
-        $this->slug               = $r->slug;
-        $this->description        = $r->description ?? '';
+        $this->roleId              = $r->id;
+        $this->name                = $r->name;
+        $this->slug                = $r->slug;
+        $this->description         = $r->description ?? '';
         $this->selectedPermissions = $r->permissions->pluck('id')->map(fn ($id) => (string) $id)->toArray();
-        $this->showModal          = true;
+        $this->showModal           = true;
     }
 
     public function save(): void
     {
+        abort_if(!auth()->user()->hasPermission('roles.edit'), 403);
+
         $this->validate([
             'name'        => 'required|min:2|max:100',
             'slug'        => "required|unique:roles,slug,{$this->roleId}|regex:/^[a-z0-9\-]+$/",
@@ -53,16 +57,13 @@ class RoleEdit extends Component
 
         $this->showModal = false;
         $this->dispatch('role-updated');
-        $this->dispatch('toast', message: 'Rol actualizat cu succes!');
+        $this->dispatch('toast', message: 'Role updated successfully!');
     }
 
     public function render()
     {
-        $permissions = Permission::orderBy('category')->orderBy('name')->get()
-            ->groupBy('category');
-
         return view('RBSMaterials.Roles.role-edit', [
-            'permissionsByCategory' => $permissions,
+            'permissionsByCategory' => Permission::orderBy('category')->orderBy('name')->get()->groupBy('category'),
         ]);
     }
 }

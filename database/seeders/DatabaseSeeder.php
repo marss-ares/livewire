@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(RolePermissionSeeder::class);
+        $this->call(FormEntryStatusSeeder::class);
 
         $adminRole = \App\Models\Role::where('slug', 'admin')->first();
 
