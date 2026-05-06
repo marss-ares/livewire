@@ -10,13 +10,14 @@ class FormColumn extends Model
 {
     protected $fillable = [
         'form_id', 'name', 'key', 'type',
-        'options', 'required', 'order',
+        'options', 'required', 'order', 'is_system',
     ];
 
     protected $casts = [
-        'options'  => 'array',   // JSON -> array automat
-        'required' => 'boolean',
-        'order'    => 'integer',
+        'options'   => 'array',
+        'required'  => 'boolean',
+        'order'     => 'integer',
+        'is_system' => 'boolean',
     ];
 
     // Form-ul căruia îi aparține câmpul
