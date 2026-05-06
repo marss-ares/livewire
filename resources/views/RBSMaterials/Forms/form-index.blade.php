@@ -3,17 +3,19 @@
     {{-- Top bar --}}
     <div class="flex items-center justify-between">
         <flux:heading size="xl" level="1" class="!font-bold tracking-tight">Forms</flux:heading>
-        <flux:button icon="arrow-up-tray" variant="primary" wire:click="openImportModal">
-            Import Excel
-        </flux:button>
+        @if (auth()->user()->hasPermission('forms.import'))
+            <flux:button icon="arrow-up-tray" variant="primary" wire:click="openImportModal">
+                Import Excel
+            </flux:button>
+        @endif
     </div>
 
     @forelse ($formsData as $data)
         @php
-            $form         = $data['form'];
-            $items        = $data['items'];
-            $entries      = $data['entries'];
-            $sort         = $data['sort'];
+            $form = $data['form'];
+            $items = $data['items'];
+            $entries = $data['entries'];
+            $sort = $data['sort'];
             $activeFilter = $data['activeFilter'];
         @endphp
 
@@ -25,8 +27,19 @@
                     <h2 class="text-base font-semibold text-zinc-800 dark:text-zinc-100">
                         {{ $form->name }}
                     </h2>
+                    @if (auth()->user()->hasRole('admin'))
+                        <span
+                            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            {{ $form->owner?->name ?? '—' }}
+                        </span>
+                    @endif
                     <span class="text-xs text-zinc-400">
-                        {{ $form->columns->count() }} cols · {{ $form->entries->count() }} rows · {{ $form->created_at->format('d M Y') }}
+                        {{ $form->columns->count() }} cols · {{ $form->entries->count() }} rows ·
+                        {{ $form->created_at->format('d M Y') }}
                     </span>
                 </div>
                 <div class="flex items-center gap-1">
@@ -40,7 +53,7 @@
             </div>
 
             {{-- Status filter pills --}}
-            @if($statuses->isNotEmpty())
+            @if ($statuses->isNotEmpty())
                 <div class="flex items-center gap-1.5 flex-wrap mb-2">
                     <span class="text-xs text-zinc-400 mr-0.5">Filter:</span>
 
@@ -61,7 +74,8 @@
                                        ? 'bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 font-medium'
                                        : 'border-zinc-200 dark:border-zinc-600 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700/50' }}"
                             style="{{ $isActive ? 'border-color:' . $status->color : '' }}">
-                            <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $status->color }}"></span>
+                            <span class="w-2 h-2 rounded-full shrink-0"
+                                style="background-color: {{ $status->color }}"></span>
                             {{ $status->name }}
                             <span class="text-[10px] opacity-60">
                                 {{ $form->entries->where('status_id', $status->id)->count() }}
@@ -72,24 +86,29 @@
             @endif
 
             {{-- Data table --}}
-            <div class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm overflow-x-auto">
+            <div
+                class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm overflow-x-auto">
                 <table class="min-w-full text-sm border-collapse">
                     <thead>
                         <tr class="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-300 dark:border-zinc-600">
                             {{-- Row number --}}
-                            <th class="w-10 px-3 py-2 text-center text-xs font-semibold text-zinc-400 border-r border-zinc-200 dark:border-zinc-700 select-none">
+                            <th
+                                class="w-10 px-3 py-2 text-center text-xs font-semibold text-zinc-400 border-r border-zinc-200 dark:border-zinc-700 select-none">
                                 #
                             </th>
 
                             {{-- Unified ordered columns --}}
                             @foreach ($items as $item)
+                                @if ($item['type'] === 'owner' && !auth()->user()->hasRole('admin'))
+                                    @continue
+                                @endif
                                 @php
                                     $isActive = ($sort['key'] ?? null) === $item['key'];
-                                    $label    = match($item['type']) {
+                                    $label = match ($item['type']) {
                                         'status' => 'Status',
                                         'source' => 'Source',
-                                        'owner'  => 'Owner',
-                                        default  => $item['col']->name,
+                                        'owner' => 'Owner',
+                                        default => $item['col']->name,
                                     };
                                     $isLast = $loop->last;
                                 @endphp
@@ -103,12 +122,24 @@
                                         {{ $label }}
                                         @if ($isActive)
                                             @if ($sort['dir'] === 'asc')
-                                                <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                                <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2.5" d="M5 15l7-7 7 7" />
+                                                </svg>
                                             @else
-                                                <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                                                <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                                                </svg>
                                             @endif
                                         @else
-                                            <svg class="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-40 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                                            <svg class="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-40 transition-opacity"
+                                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                                    d="M5 15l7-7 7 7" />
+                                            </svg>
                                         @endif
                                     </span>
                                 </th>
@@ -120,28 +151,33 @@
                             <tr wire:key="entry-{{ $entry->id }}"
                                 class="border-b border-zinc-100 dark:border-zinc-700/50 hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors">
 
-                                <td class="px-3 py-2 text-center text-xs text-zinc-400 border-r border-zinc-200 dark:border-zinc-700 select-none">
+                                <td
+                                    class="px-3 py-2 text-center text-xs text-zinc-400 border-r border-zinc-200 dark:border-zinc-700 select-none">
                                     {{ $i + 1 }}
                                 </td>
 
                                 @foreach ($items as $item)
+                                    @if ($item['type'] === 'owner' && !auth()->user()->hasRole('admin'))
+                                        @continue
+                                    @endif
                                     @if ($item['type'] === 'data')
-                                        <td class="px-4 py-2 border-r border-zinc-100 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
+                                        <td
+                                            class="px-4 py-2 border-r border-zinc-100 dark:border-zinc-700/50 text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
                                             {{ $entry->valueFor($item['col']->id) ?? '' }}
                                         </td>
-
                                     @elseif ($item['type'] === 'status')
                                         @php $selectedStatus = $statuses->firstWhere('id', $entry->status_id); @endphp
                                         <td class="px-3 py-1.5 border-r border-zinc-100 dark:border-zinc-700/50">
-                                            @if($statuses->isEmpty())
+                                            @if ($statuses->isEmpty())
                                                 <span class="text-xs text-zinc-400 italic">No statuses —
-                                                    <a href="{{ route('statuses.index') }}" wire:navigate class="underline">create some</a>
+                                                    <a href="{{ route('statuses.index') }}" wire:navigate
+                                                        class="underline">create some</a>
                                                 </span>
                                             @else
                                                 <div class="flex items-center gap-2">
                                                     {{-- Colored dot for selected status --}}
                                                     <span class="w-2.5 h-2.5 rounded-full shrink-0 transition-colors"
-                                                          style="background-color: {{ $selectedStatus?->color ?? 'transparent' }};
+                                                        style="background-color: {{ $selectedStatus?->color ?? 'transparent' }};
                                                                  {{ $selectedStatus ? '' : 'border: 1.5px solid #d1d5db;' }}">
                                                     </span>
                                                     <select
@@ -149,7 +185,8 @@
                                                         class="text-xs rounded-lg px-2 py-1 border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer">
                                                         <option value="">— none —</option>
                                                         @foreach ($statuses as $status)
-                                                            <option value="{{ $status->id }}" @selected($entry->status_id === $status->id)>
+                                                            <option value="{{ $status->id }}"
+                                                                @selected($entry->status_id === $status->id)>
                                                                 {{ $status->name }}
                                                             </option>
                                                         @endforeach
@@ -157,14 +194,13 @@
                                                 </div>
                                             @endif
                                         </td>
-
                                     @elseif ($item['type'] === 'source')
                                         <td class="px-4 py-2 text-xs text-zinc-400 whitespace-nowrap">
                                             {{ $entry->source ?? '—' }}
                                         </td>
-
                                     @elseif ($item['type'] === 'owner')
-                                        <td class="px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
+                                        <td
+                                            class="px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
                                             {{ $form->owner?->name ?? '—' }}
                                         </td>
                                     @endif
@@ -186,13 +222,17 @@
         <div class="flex flex-col items-center gap-4 py-24 text-zinc-400">
             <svg class="w-16 h-16 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <p class="text-sm font-medium">No imports yet</p>
+             @if(auth()->user()->hasPermission('forms.import'))
+          
             <flux:button variant="primary" icon="arrow-up-tray" wire:click="openImportModal">
                 Import your first Excel
             </flux:button>
+            @endif
         </div>
+
     @endforelse
 
     {{-- ── Column Manager Modal ─────────────────────────────────────────── --}}
@@ -202,24 +242,33 @@
             <flux:subheading>Reorder or hide columns for this table.</flux:subheading>
         </div>
 
-        @if($columnMenuFormId && $menuItems->isNotEmpty())
+        @if ($columnMenuFormId && $menuItems->isNotEmpty())
             <div class="divide-y divide-zinc-100 dark:divide-zinc-700">
                 @foreach ($menuItems as $i => $item)
+                    @if ($item['key'] === 'owner' && !auth()->user()->hasRole('admin'))
+                        @continue
+                    @endif
                     <div class="flex items-center gap-3 py-2.5">
                         {{-- Up / Down arrows --}}
                         <div class="flex flex-col gap-0.5">
                             <button wire:click="moveColUp({{ $columnMenuFormId }}, '{{ $item['key'] }}')"
-                                @class(['p-0.5 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors',
-                                        'opacity-20 pointer-events-none' => $loop->first])>
+                                @class([
+                                    'p-0.5 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors',
+                                    'opacity-20 pointer-events-none' => $loop->first,
+                                ])>
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M5 15l7-7 7 7" />
                                 </svg>
                             </button>
                             <button wire:click="moveColDown({{ $columnMenuFormId }}, '{{ $item['key'] }}')"
-                                @class(['p-0.5 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors',
-                                        'opacity-20 pointer-events-none' => $loop->last])>
+                                @class([
+                                    'p-0.5 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors',
+                                    'opacity-20 pointer-events-none' => $loop->last,
+                                ])>
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
                         </div>
@@ -232,8 +281,9 @@
 
                         <span class="text-sm text-zinc-700 dark:text-zinc-300 flex-1">{{ $item['label'] }}</span>
 
-                        @if($item['system'])
-                            <span class="text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-400">system</span>
+                        @if ($item['system'])
+                            <span
+                                class="text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-700 text-zinc-400">system</span>
                         @endif
                     </div>
                 @endforeach
@@ -257,14 +307,16 @@
 
             <div>
                 <flux:label class="mb-2">Excel File (.xlsx, .xls, .csv)</flux:label>
-                <label class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-xl cursor-pointer
+                <label
+                    class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-xl cursor-pointer
                               border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900/30
                               hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-colors">
                     <div class="flex flex-col items-center gap-2 text-zinc-500 dark:text-zinc-400">
-                        @if($file)
-                            <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        @if ($file)
+                            <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span class="text-sm font-medium text-green-600 dark:text-green-400">
                                 {{ $file->getClientOriginalName() }}
@@ -273,7 +325,7 @@
                         @else
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
                             <span class="text-sm font-medium">Drop file here or click to browse</span>
                             <span class="text-xs">.xlsx, .xls, .csv — max 10MB</span>
@@ -281,7 +333,9 @@
                     </div>
                     <input type="file" class="hidden" wire:model="file" accept=".xlsx,.xls,.csv" />
                 </label>
-                @error('file') <p class="mt-1 text-xs text-red-500">{{ $message }}</p> @enderror
+                @error('file')
+                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                @enderror
             </div>
 
             <div class="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">

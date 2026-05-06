@@ -269,7 +269,7 @@ class FormsIndex extends Component
     public function render()
     {
         $rawForms = Form::query()
-            ->where('user_id', auth()->id())
+            ->when(!auth()->user()->hasRole('admin'), fn ($q) => $q->where('user_id', auth()->id()))
             ->with([
                 'columns'        => fn ($q) => $q->orderBy('order'),
                 'entries.values',
@@ -279,10 +279,7 @@ class FormsIndex extends Component
             ->latest()
             ->get();
 
-        // Only show current user's statuses
-        $statuses = FormEntryStatus::where('owner_id', auth()->id())
-            ->orderBy('order')
-            ->get();
+        $statuses = FormEntryStatus::orderBy('order')->get();
 
         $formsData = $rawForms->map(function ($form) {
             $id        = $form->id;

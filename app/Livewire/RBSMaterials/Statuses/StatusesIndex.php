@@ -23,6 +23,8 @@ class StatusesIndex extends Component
 
     public function openCreate(): void
     {
+        abort_if(!auth()->user()->hasRole('admin'), 403);
+
         $this->reset(['name', 'editingId']);
         $this->color = '#3b82f6';
         $this->resetErrorBag();
@@ -31,7 +33,9 @@ class StatusesIndex extends Component
 
     public function openEdit(int $id): void
     {
-        $status = FormEntryStatus::where('owner_id', auth()->id())->findOrFail($id);
+        abort_if(!auth()->user()->hasRole('admin'), 403);
+
+        $status = FormEntryStatus::findOrFail($id);
 
         $this->editingId = $status->id;
         $this->name      = $status->name;
@@ -43,25 +47,25 @@ class StatusesIndex extends Component
 
     public function save(): void
     {
+        abort_if(!auth()->user()->hasRole('admin'), 403);
+
         $this->validate([
             'name'  => 'required|min:1|max:100',
             'color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
         ]);
 
         if ($this->editingId) {
-            FormEntryStatus::where('owner_id', auth()->id())
-                ->findOrFail($this->editingId)
+            FormEntryStatus::findOrFail($this->editingId)
                 ->update(['name' => $this->name, 'color' => $this->color]);
 
             $this->dispatch('toast', message: 'Status updated!');
         } else {
-            $nextOrder = (FormEntryStatus::where('owner_id', auth()->id())->max('order') ?? -1) + 1;
+            $nextOrder = (FormEntryStatus::max('order') ?? -1) + 1;
 
             FormEntryStatus::create([
-                'owner_id' => auth()->id(),
-                'name'     => $this->name,
-                'color'    => $this->color,
-                'order'    => $nextOrder,
+                'name'  => $this->name,
+                'color' => $this->color,
+                'order' => $nextOrder,
             ]);
 
             $this->dispatch('toast', message: 'Status created!');
@@ -76,7 +80,9 @@ class StatusesIndex extends Component
 
     public function confirmDelete(int $id): void
     {
-        $status = FormEntryStatus::where('owner_id', auth()->id())->findOrFail($id);
+        abort_if(!auth()->user()->hasRole('admin'), 403);
+
+        $status = FormEntryStatus::findOrFail($id);
         $this->deleteId   = $status->id;
         $this->deleteName = $status->name;
         $this->showDeleteModal = true;
@@ -84,9 +90,9 @@ class StatusesIndex extends Component
 
     public function delete(): void
     {
-        FormEntryStatus::where('owner_id', auth()->id())
-            ->findOrFail($this->deleteId)
-            ->delete();
+        abort_if(!auth()->user()->hasRole('admin'), 403);
+
+        FormEntryStatus::findOrFail($this->deleteId)->delete();
 
         $this->showDeleteModal = false;
         $this->dispatch('toast', message: 'Status deleted!');
@@ -98,7 +104,9 @@ class StatusesIndex extends Component
 
     public function moveUp(int $id): void
     {
-        $statuses = FormEntryStatus::where('owner_id', auth()->id())->orderBy('order')->get();
+        abort_if(!auth()->user()->hasRole('admin'), 403);
+
+        $statuses = FormEntryStatus::orderBy('order')->get();
         $idx = $statuses->search(fn ($s) => $s->id === $id);
 
         if ($idx > 0) {
@@ -108,7 +116,9 @@ class StatusesIndex extends Component
 
     public function moveDown(int $id): void
     {
-        $statuses = FormEntryStatus::where('owner_id', auth()->id())->orderBy('order')->get();
+        abort_if(!auth()->user()->hasRole('admin'), 403);
+
+        $statuses = FormEntryStatus::orderBy('order')->get();
         $idx = $statuses->search(fn ($s) => $s->id === $id);
 
         if ($idx !== false && $idx < $statuses->count() - 1) {
@@ -129,9 +139,9 @@ class StatusesIndex extends Component
 
     public function render()
     {
-        $statuses = FormEntryStatus::where('owner_id', auth()->id())
-            ->orderBy('order')
-            ->get();
+        abort_if(!auth()->user()->hasRole('admin'), 403);
+
+        $statuses = FormEntryStatus::orderBy('order')->get();
 
         return view('RBSMaterials.Statuses.statuses-index', compact('statuses'));
     }

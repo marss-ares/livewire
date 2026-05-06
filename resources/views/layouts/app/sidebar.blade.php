@@ -45,7 +45,7 @@
                 </flux:sidebar.item>
             @endif
 
-            @if (auth()->user()->hasPermission('statuses.view'))
+            @if (auth()->user()->hasRole('admin'))
                 <flux:sidebar.item icon="tag" :href="route('statuses.index')"
                     :current="request()->routeIs('statuses.*')" wire:navigate>
                     {{ __('Statuses') }}

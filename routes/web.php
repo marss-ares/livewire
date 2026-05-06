@@ -24,7 +24,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/forms/{form}/edit', FormEdit::class)->name('forms.edit');
     Route::get('/forms/{form}/entries', FormEntries::class)->name('forms.entries');
 
-    Route::get('/statuses', StatusesIndex::class)->name('statuses.index');
+    Route::get('/statuses', StatusesIndex::class)->middleware('role:admin')->name('statuses.index');
 
     Route::get('/forms/{form}/export', FormExportController::class)->name('forms.export');
 });

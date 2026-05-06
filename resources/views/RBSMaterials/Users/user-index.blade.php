@@ -4,18 +4,18 @@
             <flux:heading size="xl" level="1" class="!font-bold tracking-tight">
                 Users
             </flux:heading>
-
             <div class="flex-none">
-                <flux:input size="sm" icon="magnifying-glass" placeholder="Search users..." wire:model.live="search"
-                    class="w-64 flex-none" />
+                <flux:input size="sm" icon="magnifying-glass" placeholder="Search users..."
+                    wire:model.live="search" class="w-64 flex-none" />
             </div>
         </div>
 
-        <div
-            class="relative z-10 flex items-center gap-2 bg-white dark:bg-zinc-800 p-2 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
-            <flux:button size="sm" icon="plus" variant="primary" wire:click="$dispatch('openCreateModal')">
-                Add User
-            </flux:button>
+        <div class="relative z-10 flex items-center gap-2 bg-white dark:bg-zinc-800 p-2 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
+            @if(auth()->user()->hasPermission('users.create'))
+                <flux:button size="sm" icon="plus" variant="primary" wire:click="$dispatch('openCreateModal')">
+                    Add User
+                </flux:button>
+            @endif
 
             <flux:spacer />
 
@@ -25,15 +25,16 @@
         </div>
     </header>
 
-    <div
-        class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm">
+    <div class="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden shadow-sm">
         <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
             <thead class="bg-zinc-50 dark:bg-zinc-900/50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Name</th>
                     <th class="px-6 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Email</th>
-                    <th class="px-6 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Roles</th>
-                    <th class="px-6 py-3 text-right text-xs font-semibold text-zinc-500 uppercase tracking-wider">Actions</th>
+                    <th class="px-6 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">Role</th>
+                    @if(auth()->user()->hasPermission('users.edit') || auth()->user()->hasPermission('users.delete'))
+                        <th class="px-6 py-3 text-right text-xs font-semibold text-zinc-500 uppercase tracking-wider">Actions</th>
+                    @endif
                 </tr>
             </thead>
             <tbody class="divide-y divide-zinc-100 dark:divide-zinc-700/50">
@@ -55,12 +56,18 @@
                                 <span class="text-xs text-zinc-400">—</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right">
-                            <flux:button variant="ghost" size="xs" icon="pencil" circle
-                                wire:click="$dispatch('openEditModal', { user: {{ $user->id }} })" />
-                            <flux:button variant="ghost" size="xs" icon="trash" circle
-                                wire:click="$dispatch('openDeleteModal', { user: {{ $user->id }} })" />
-                        </td>
+                        @if(auth()->user()->hasPermission('users.edit') || auth()->user()->hasPermission('users.delete'))
+                            <td class="px-6 py-4 whitespace-nowrap text-right space-x-1">
+                                @if(auth()->user()->hasPermission('users.edit'))
+                                    <flux:button variant="ghost" size="xs" icon="pencil" circle
+                                        wire:click="$dispatch('openEditModal', { user: {{ $user->id }} })" />
+                                @endif
+                                @if(auth()->user()->hasPermission('users.delete'))
+                                    <flux:button variant="ghost" size="xs" icon="trash" circle
+                                        wire:click="$dispatch('openDeleteModal', { user: {{ $user->id }} })" />
+                                @endif
+                            </td>
+                        @endif
                     </tr>
                 @empty
                     <tr>
@@ -73,9 +80,7 @@
         </table>
     </div>
 
-    <div class="mt-4">
-        {{ $users->links() }}
-    </div>
+    <div class="mt-4">{{ $users->links() }}</div>
 
     <livewire:r-b-s-materials.users.user-create />
     <livewire:r-b-s-materials.users.user-edit />
