@@ -15,6 +15,14 @@
                     </template>
                 </div>
             </div>
+
+            <form autocomplete="off">
+  <input type="text" name="username" autocomplete="off" />
+  <!--OR-->
+  <input type="text" name="email" autocomplete="off" />
+  
+  <input type="password" name="password" autocomplete="new-password" />
+</form>
         </div>
 
         <div class="relative z-10 flex items-center gap-2 bg-white dark:bg-zinc-800 p-2 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
