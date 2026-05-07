@@ -5,24 +5,15 @@
                 Users
             </flux:heading>
             <div class="flex-none">
-                <div x-data="{ ready: false }" x-init="setTimeout(() => ready = true, 100)">
-                    <template x-if="ready">
-                        <input
-                            x-on:input.debounce.300ms="$wire.set('search', $el.value)"
-                            placeholder="Search users..."
-                            class="w-64 h-8 px-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </template>
-                </div>
+                <form autocomplete="off" onsubmit="return false">
+                    <input
+                        wire:model.live="search"
+                        placeholder="Search users..."
+                        autocomplete="off"
+                        class="w-64 h-8 px-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </form>
             </div>
-
-            <form autocomplete="off">
-  <input type="text" name="username" autocomplete="off" />
-  <!--OR-->
-  <input type="text" name="email" autocomplete="off" />
-  
-  <input type="password" name="password" autocomplete="new-password" />
-</form>
         </div>
 
         <div class="relative z-10 flex items-center gap-2 bg-white dark:bg-zinc-800 p-2 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm">
