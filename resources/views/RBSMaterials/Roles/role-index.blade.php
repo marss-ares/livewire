@@ -6,7 +6,8 @@
             </flux:heading>
             <div class="flex-none">
                 <flux:input type="search" size="sm" icon="magnifying-glass" placeholder="Search roles..."
-                    wire:model.live="search" class="w-64" />
+                    wire:model.live="search" class="w-64"
+                    x-on:input="if (!$event.inputType) { $el.value = ''; $wire.search = ''; }" />
             </div>
         </div>
 
