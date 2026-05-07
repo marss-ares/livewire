@@ -6,7 +6,7 @@
             </flux:heading>
             <div class="flex-none">
                 <flux:input size="sm" icon="magnifying-glass" placeholder="Search roles..."
-                    wire:model.live="search" class="w-64" autocomplete="off" />
+                    wire:model.live="search" class="w-64" autocomplete="new-password" />
             </div>
         </div>
 
