@@ -6,7 +6,7 @@
             </flux:heading>
             <div class="flex-none">
                 <flux:input size="sm" icon="magnifying-glass" placeholder="Search users..."
-                    wire:model.live="search" class="w-64 flex-none" />
+                    wire:model.live="search" class="w-64 flex-none" autocomplete="off" />
             </div>
         </div>
 
@@ -57,12 +57,13 @@
                             @endif
                         </td>
                         @if(auth()->user()->hasPermission('users.edit') || auth()->user()->hasPermission('users.delete'))
+                            @php $canModify = !$user->hasRole('admin') || auth()->id() === $user->id; @endphp
                             <td class="px-6 py-4 whitespace-nowrap text-right space-x-1">
-                                @if(auth()->user()->hasPermission('users.edit'))
+                                @if(auth()->user()->hasPermission('users.edit') && $canModify)
                                     <flux:button variant="ghost" size="xs" icon="pencil" circle
                                         wire:click="$dispatch('openEditModal', { user: {{ $user->id }} })" />
                                 @endif
-                                @if(auth()->user()->hasPermission('users.delete'))
+                                @if(auth()->user()->hasPermission('users.delete') && $canModify)
                                     <flux:button variant="ghost" size="xs" icon="trash" circle
                                         wire:click="$dispatch('openDeleteModal', { user: {{ $user->id }} })" />
                                 @endif

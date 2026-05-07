@@ -21,7 +21,8 @@ class UserEdit extends Component
     {
         abort_if(!auth()->user()->hasPermission('users.edit'), 403);
 
-        $this->user     = User::findOrFail($user);
+        $this->user = User::findOrFail($user);
+        abort_if($this->user->hasRole('admin') && auth()->id() !== $this->user->id, 403);
         $this->name     = $this->user->name;
         $this->email    = $this->user->email;
         $this->roleId   = $this->user->role_id;
@@ -32,6 +33,7 @@ class UserEdit extends Component
     public function update(): void
     {
         abort_if(!auth()->user()->hasPermission('users.edit'), 403);
+        abort_if($this->user->hasRole('admin') && auth()->id() !== $this->user->id, 403);
 
         $this->validate([
             'name'     => 'required|min:3',

@@ -7,7 +7,7 @@
                 {{ $form->name }}
             </flux:heading>
             <p class="text-sm text-zinc-400 mt-0.5">
-                {{ $columns->count() }} columns · {{ $entries->total() }} rows
+                {{ $columns->count() }} columns · {{ $entries->count() }} rows
             </p>
         </div>
     </div>
@@ -48,7 +48,7 @@
                                 class="border-b border-zinc-100 dark:border-zinc-700/50 hover:bg-blue-50/40 dark:hover:bg-blue-900/10 transition-colors group">
                                 {{-- Row number --}}
                                 <td class="px-3 py-2 text-center text-xs text-zinc-400 border-r border-zinc-200 dark:border-zinc-700 select-none sticky left-0 bg-white dark:bg-zinc-800 group-hover:bg-blue-50/40 dark:group-hover:bg-blue-900/10">
-                                    {{ ($entries->currentPage() - 1) * $entries->perPage() + $i + 1 }}
+                                    {{ $loop->iteration }}
                                 </td>
                                 {{-- Values for each column --}}
                                 @foreach ($columns as $col)
@@ -69,6 +69,5 @@
             </div>
         </div>
 
-        <div class="mt-4">{{ $entries->links() }}</div>
     @endif
 </div>

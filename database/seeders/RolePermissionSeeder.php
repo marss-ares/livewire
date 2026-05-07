@@ -30,7 +30,8 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'Delete Statuses',  'slug' => 'statuses.delete',  'category' => 'Statuses',     'description' => 'Can delete statuses'],
             ['name' => 'Reorder Statuses', 'slug' => 'statuses.reorder', 'category' => 'Statuses',     'description' => 'Can change the order of statuses'],
 
-            ['name' => 'Import Excel', 'slug' => 'forms.import', 'category' => 'Forms',     'description' => 'Can import forms from Excel'],
+            ['name' => 'Import Excel', 'slug' => 'forms.import', 'category' => 'Forms', 'description' => 'Can import forms from Excel'],
+            ['name' => 'Export Excel', 'slug' => 'forms.export', 'category' => 'Forms', 'description' => 'Can export forms to Excel'],
         ];
 
         foreach ($permissions as $data) {

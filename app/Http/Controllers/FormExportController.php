@@ -14,7 +14,8 @@ class FormExportController extends Controller
 {
     public function __invoke(Form $form)
     {
-        abort_if($form->user_id !== auth()->id(), 403);
+        abort_if(!auth()->user()->hasPermission('forms.export'), 403);
+        abort_if($form->user_id !== auth()->id() && !auth()->user()->hasRole('admin'), 403);
 
         // Pull the export state that FormsIndex stored just before redirect
         $state        = session()->pull("form_export_{$form->id}", []);

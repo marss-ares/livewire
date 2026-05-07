@@ -17,6 +17,9 @@ class UserDelete extends Component
     {
         abort_if(!auth()->user()->hasPermission('users.delete'), 403);
 
+        $target = User::findOrFail($user);
+        abort_if($target->hasRole('admin') && auth()->id() !== $target->id, 403);
+
         $this->userId  = $user;
         $this->isSelf  = ($user === auth()->id());
         $this->showModal = true;

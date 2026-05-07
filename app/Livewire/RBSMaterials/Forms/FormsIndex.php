@@ -3,23 +3,14 @@
 namespace App\Livewire\RBSMaterials\Forms;
 
 use App\Models\Form;
-use App\Models\FormColumn;
 use App\Models\FormEntry;
 use App\Models\FormEntryStatus;
-use App\Models\FormEntryValue;
-use Illuminate\Support\Str;
 use Livewire\Component;
-use Livewire\WithFileUploads;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class FormsIndex extends Component
 {
-    use WithFileUploads;
-
-    // ── Import modal ──────────────────────────────────────────────────────────
-    public bool   $showImportModal = false;
-    public string $formName = '';
-    public $file = null;
+    // ── Active tab ────────────────────────────────────────────────────────────
+    public ?int $activeFormId = null;
 
     // ── Delete modal ──────────────────────────────────────────────────────────
     public bool   $showDeleteModal = false;
@@ -46,6 +37,10 @@ class FormsIndex extends Component
     // [formId => statusId|null]  null = show all
     public array $statusFilter = [];
 
+    // ── Per-form date filter ──────────────────────────────────────────────────
+    // [formId => ['from' => 'Y-m-d', 'to' => 'Y-m-d']]
+    public array $dateFilter = [];
+
     // =========================================================================
     // Boot — load persisted preferences
     // =========================================================================
@@ -65,91 +60,9 @@ class FormsIndex extends Component
         ]);
     }
 
-    // =========================================================================
-    // Import
-    // =========================================================================
-
-    public function openImportModal(): void
+    public function setActiveForm(int $id): void
     {
-        $this->reset(['formName', 'file']);
-        $this->resetErrorBag();
-        $this->showImportModal = true;
-    }
-
-    public function import(): void
-    {
-        $this->validate([
-            'formName' => 'required|min:2|max:100',
-            'file'     => 'required|file|mimes:xlsx,xls,csv|max:10240',
-        ]);
-
-        $path        = $this->file->getRealPath();
-        $spreadsheet = IOFactory::load($path);
-        $sheet       = $spreadsheet->getActiveSheet();
-        $rows        = $sheet->toArray(null, true, true, true);
-
-        if (empty($rows)) {
-            $this->addError('file', 'The file is empty.');
-            return;
-        }
-
-        $firstRow = reset($rows);
-        $headers  = array_values(array_filter($firstRow, fn ($v) => !is_null($v) && $v !== ''));
-
-        if (empty($headers)) {
-            $this->addError('file', 'Could not find column headers in the first row.');
-            return;
-        }
-
-        $form = Form::create([
-            'user_id' => auth()->id(),
-            'name'    => $this->formName,
-        ]);
-
-        $letterMap = array_keys($firstRow);
-        $columns   = [];
-
-        foreach ($headers as $order => $header) {
-            $columns[$order] = FormColumn::create([
-                'form_id'  => $form->id,
-                'name'     => (string) $header,
-                'key'      => Str::slug((string) $header, '_') ?: 'col_' . ($order + 1),
-                'type'     => 'text',
-                'required' => false,
-                'order'    => $order,
-            ]);
-        }
-
-        $imported   = 0;
-        $sourceName = $this->file->getClientOriginalName();
-
-        foreach (array_slice($rows, 1) as $row) {
-            if (empty(array_filter(array_values($row), fn ($v) => !is_null($v) && $v !== ''))) {
-                continue;
-            }
-
-            $entry = FormEntry::create([
-                'form_id' => $form->id,
-                'user_id' => auth()->id(),
-                'source'  => $sourceName,
-            ]);
-
-            foreach ($headers as $index => $header) {
-                $letter = $letterMap[$index] ?? null;
-                $value  = $letter ? ($row[$letter] ?? null) : null;
-
-                FormEntryValue::create([
-                    'form_entry_id'  => $entry->id,
-                    'form_column_id' => $columns[$index]->id,
-                    'value'          => is_null($value) ? null : (string) $value,
-                ]);
-            }
-
-            $imported++;
-        }
-
-        $this->showImportModal = false;
-        $this->dispatch('toast', message: "Imported {$imported} rows into \"{$form->name}\"!");
+        $this->activeFormId = $id;
     }
 
     // =========================================================================
@@ -198,6 +111,16 @@ class FormsIndex extends Component
     public function setStatusFilter(int $formId, ?int $statusId): void
     {
         $this->statusFilter[$formId] = $statusId;
+    }
+
+    public function setDateFilter(int $formId, string $field, string $value): void
+    {
+        $this->dateFilter[$formId][$field] = $value;
+    }
+
+    public function clearDateFilter(int $formId): void
+    {
+        $this->dateFilter[$formId] = ['from' => '', 'to' => ''];
     }
 
     public function export(int $formId): void
@@ -341,13 +264,25 @@ class FormsIndex extends Component
                 ->filter()
                 ->values();
 
-            // ── Filter entries by status ──────────────────────────────────────
+            // ── Filter entries by status & date ──────────────────────────────
             $sort         = $this->sortState[$id];
             $activeFilter = $this->statusFilter[$id] ?? null;
+            $dateFrom     = $this->dateFilter[$id]['from'] ?? '';
+            $dateTo       = $this->dateFilter[$id]['to']   ?? '';
             $entries      = $form->entries;
 
             if ($activeFilter !== null) {
                 $entries = $entries->filter(fn ($e) => $e->status_id === $activeFilter)->values();
+            }
+
+            if ($dateFrom !== '') {
+                $from    = \Carbon\Carbon::parse($dateFrom)->startOfDay();
+                $entries = $entries->filter(fn ($e) => $e->created_at->gte($from))->values();
+            }
+
+            if ($dateTo !== '') {
+                $to      = \Carbon\Carbon::parse($dateTo)->endOfDay();
+                $entries = $entries->filter(fn ($e) => $e->created_at->lte($to))->values();
             }
 
             // ── Sort entries ──────────────────────────────────────────────────
@@ -367,7 +302,7 @@ class FormsIndex extends Component
                 $entries = $entries->values();
             }
 
-            return compact('form', 'items', 'entries', 'sort', 'activeFilter');
+            return compact('form', 'items', 'entries', 'sort', 'activeFilter', 'dateFrom', 'dateTo');
         });
 
         // ── Column manager modal data ─────────────────────────────────────────
@@ -401,6 +336,10 @@ class FormsIndex extends Component
                     ->filter()
                     ->values();
             }
+        }
+
+        if ($this->activeFormId === null && $formsData->isNotEmpty()) {
+            $this->activeFormId = $formsData->first()['form']->id;
         }
 
         return view('RBSMaterials.Forms.form-index', compact('formsData', 'statuses', 'menuItems'));

@@ -20,8 +20,9 @@ class FormImport extends Component
     public bool $showModal = false;
     public int  $step      = 1;
 
-    public $file          = null;
+    public $file           = null;
     public string $formName = '';
+    public ?int   $ownerId  = null;
 
     // Step 2: column mapping
     // fileHeaders[i] = column name from the file
@@ -42,7 +43,7 @@ class FormImport extends Component
 
     public function open(): void
     {
-        $this->reset(['file', 'formName', 'fileHeaders', 'fileLetters', 'mapping', 'importing', 'imported', 'total']);
+        $this->reset(['file', 'formName', 'ownerId', 'fileHeaders', 'fileLetters', 'mapping', 'importing', 'imported', 'total']);
         $this->step = 1;
         $this->showModal = true;
     }
@@ -106,7 +107,7 @@ class FormImport extends Component
         $this->total = count($dataRows);
 
         $form = Form::create([
-            'user_id' => auth()->id(),
+            'user_id' => $this->ownerId ?? auth()->id(),
             'name'    => $this->formName,
         ]);
 
@@ -257,6 +258,10 @@ class FormImport extends Component
 
     public function render()
     {
-        return view('RBSMaterials.Forms.form-import');
+        $users = auth()->user()->hasRole('admin')
+            ? User::orderBy('name')->get(['id', 'name'])
+            : collect();
+
+        return view('RBSMaterials.Forms.form-import', compact('users'));
     }
 }

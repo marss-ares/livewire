@@ -4,17 +4,15 @@ namespace App\Livewire\RBSMaterials\Forms;
 
 use App\Models\Form;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class FormEntries extends Component
 {
-    use WithPagination;
 
     public Form $form;
 
     public function mount(Form $form): void
     {
-        abort_if($form->user_id !== auth()->id(), 403);
+        abort_if($form->user_id !== auth()->id() && !auth()->user()->hasRole('admin'), 403);
         $this->form = $form;
     }
 
@@ -33,7 +31,7 @@ class FormEntries extends Component
         $entries = $this->form->entries()
             ->with(['values', 'submitter'])
             ->latest()
-            ->paginate(15);
+            ->get();
 
         return view('RBSMaterials.Forms.form-entries', [
             'columns' => $columns,
