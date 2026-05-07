@@ -5,10 +5,10 @@
                 Users
             </flux:heading>
             <div class="flex-none">
-                <input
-                    wire:model.live="search"
-               
-                    class="border"       />
+                <flux:input type="search" size="sm" icon="magnifying-glass" placeholder="Search users..."
+                    wire:model.live="search" class="w-64 flex-none"
+                    data-form-type="other" data-lpignore="true"
+                    x-on:input="if (!$event.inputType) { $el.value = ''; $wire.search = ''; }" />
             </div>
         </div>
 
