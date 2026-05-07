@@ -5,14 +5,10 @@
                 Users
             </flux:heading>
             <div class="flex-none">
-                <form autocomplete="off" onsubmit="return false">
-                    <input
-                        wire:model.live="search"
-                        placeholder="Search users..."
-                        autocomplete="off"
-                        class="w-64 h-8 px-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                </form>
+                <input
+                    wire:model.live="search"
+               
+                    class="border"       />
             </div>
         </div>
 
