@@ -7,11 +7,7 @@
             <div class="flex-none">
                 <input
                     wire:model.live="search"
-                    placeholder="Search users..."
-                    role="searchbox"
-                    data-form-type="other"
-                    data-lpignore="true"
-                    autocomplete="off"
+               
                     class="w-64 h-8 px-3 text-sm rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
             </div>
