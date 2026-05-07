@@ -5,11 +5,8 @@
                 Roles
             </flux:heading>
             <div class="flex-none">
-                <flux:input size="sm" icon="magnifying-glass" placeholder="Search roles..."
-                    wire:model.live="search" class="w-64"
-                    autocomplete="off" readonly
-                    x-on:focus="$el.removeAttribute('readonly')"
-                    x-on:blur="$el.setAttribute('readonly', '')" />
+                <flux:input type="search" size="sm" icon="magnifying-glass" placeholder="Search roles..."
+                    wire:model.live="search" class="w-64" />
             </div>
         </div>
 
