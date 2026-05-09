@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use App\Livewire\RBSMaterials\Forms\FormAppend;
+use App\Livewire\RBSMaterials\Forms\FormImport;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +27,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        Livewire::component('rbs-materials.forms.form-import', FormImport::class);
+        Livewire::component('rbs-materials.forms.form-append', FormAppend::class);
     }
 
     /**
