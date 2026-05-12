@@ -5,10 +5,14 @@ namespace App\Livewire\RBSMaterials\Forms;
 use App\Models\Form;
 use App\Models\FormEntry;
 use App\Models\FormEntryStatus;
+use App\Models\User;
 use Livewire\Component;
 
 class FormsIndex extends Component
 {
+    // ── User filter (admin only) ──────────────────────────────────────────────
+    public ?int $selectedUserId = null;
+
     // ── Active tab ────────────────────────────────────────────────────────────
     public ?int $activeFormId = null;
 
@@ -16,6 +20,12 @@ class FormsIndex extends Component
     public bool   $showDeleteModal = false;
     public ?int   $deleteFormId   = null;
     public string $deleteFormName = '';
+
+    // ── Edit modal ────────────────────────────────────────────────────────────
+    public bool   $showEditModal = false;
+    public ?int   $editFormId    = null;
+    public string $editFormName  = '';
+    public ?int   $editFormOwnerId = null;
 
     // ── Column manager modal ──────────────────────────────────────────────────
     public bool $showColumnMenu   = false;
@@ -41,6 +51,10 @@ class FormsIndex extends Component
     // [formId => ['from' => 'Y-m-d', 'to' => 'Y-m-d']]
     public array $dateFilter = [];
 
+    // ── Per-form search filter ────────────────────────────────────────────────
+    // [formId => string]  search query
+    public array $searchQuery = [];
+
     // =========================================================================
     // Boot — load persisted preferences
     // =========================================================================
@@ -65,13 +79,22 @@ class FormsIndex extends Component
         $this->activeFormId = $id;
     }
 
+    public function updated($property, $value): void
+    {
+        if ($property === 'selectedUserId') {
+            $this->activeFormId = null;
+        }
+    }
+
     // =========================================================================
     // Delete form
     // =========================================================================
 
     public function confirmDelete(int $formId): void
     {
-        $form = Form::where('user_id', auth()->id())->findOrFail($formId);
+        abort_unless(auth()->user()->hasRole('admin'), 403);
+
+        $form = Form::findOrFail($formId);
         $this->deleteFormId   = $form->id;
         $this->deleteFormName = $form->name;
         $this->showDeleteModal = true;
@@ -79,7 +102,9 @@ class FormsIndex extends Component
 
     public function deleteForm(): void
     {
-        Form::where('user_id', auth()->id())->findOrFail($this->deleteFormId)->delete();
+        abort_unless(auth()->user()->hasRole('admin'), 403);
+
+        Form::findOrFail($this->deleteFormId)->delete();
 
         unset(
             $this->sortState[$this->deleteFormId],
@@ -90,6 +115,33 @@ class FormsIndex extends Component
 
         $this->showDeleteModal = false;
         $this->dispatch('toast', message: 'Deleted!');
+    }
+
+    public function openEditModal(int $formId): void
+    {
+        abort_unless(auth()->user()->hasRole('admin'), 403);
+
+        $form = Form::findOrFail($formId);
+
+        $this->editFormId = $form->id;
+        $this->editFormName = $form->name;
+        $this->editFormOwnerId = $form->user_id;
+        $this->showEditModal = true;
+    }
+
+    public function saveFormChanges(): void
+    {
+        abort_unless(auth()->user()->hasRole('admin'), 403);
+
+        $form = Form::findOrFail($this->editFormId);
+
+        $form->update([
+            'name' => $this->editFormName,
+            'user_id' => $this->editFormOwnerId,
+        ]);
+
+        $this->showEditModal = false;
+        $this->dispatch('toast', message: 'Form updated!');
     }
 
     // =========================================================================
@@ -193,6 +245,7 @@ class FormsIndex extends Component
     {
         $rawForms = Form::query()
             ->when(!auth()->user()->hasRole('admin'), fn ($q) => $q->where('user_id', auth()->id()))
+            ->when(auth()->user()->hasRole('admin') && $this->selectedUserId, fn ($q) => $q->where('user_id', $this->selectedUserId))
             ->with([
                 'columns'        => fn ($q) => $q->orderBy('order'),
                 'entries.values',
@@ -201,6 +254,8 @@ class FormsIndex extends Component
             ])
             ->latest()
             ->get();
+
+        $users = auth()->user()->hasRole('admin') ? User::orderBy('name')->get() : collect();
 
         $statuses = FormEntryStatus::orderBy('order')->get();
 
@@ -285,6 +340,20 @@ class FormsIndex extends Component
                 $entries = $entries->filter(fn ($e) => $e->created_at->lte($to))->values();
             }
 
+            // ── Search filter ─────────────────────────────────────────────────
+            $searchTerm = strtolower($this->searchQuery[$id] ?? '');
+            if ($searchTerm !== '') {
+                $entries = $entries->filter(function ($e) use ($searchTerm, $form, $colById) {
+                    foreach ($form->columns as $col) {
+                        $value = strtolower($e->valueFor($col->id) ?? '');
+                        if (str_contains($value, $searchTerm)) return true;
+                    }
+                    if (str_contains(strtolower($e->status?->name ?? ''), $searchTerm)) return true;
+                    if (str_contains(strtolower($e->source ?? ''), $searchTerm)) return true;
+                    return false;
+                })->values();
+            }
+
             // ── Sort entries ──────────────────────────────────────────────────
             if ($sort['key']) {
                 $ownerName = $form->owner?->name ?? '';
@@ -342,6 +411,8 @@ class FormsIndex extends Component
             $this->activeFormId = $formsData->first()['form']->id;
         }
 
-        return view('RBSMaterials.Forms.form-index', compact('formsData', 'statuses', 'menuItems'));
+        $allUsers = User::orderBy('name')->get();
+
+        return view('RBSMaterials.Forms.form-index', compact('formsData', 'statuses', 'menuItems', 'users', 'allUsers'));
     }
 }

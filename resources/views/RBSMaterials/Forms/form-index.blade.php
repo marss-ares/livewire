@@ -2,7 +2,20 @@
 
     {{-- Top bar --}}
     <div class="flex items-center justify-between">
-        <flux:heading size="xl" level="1" class="!font-bold tracking-tight">Forms</flux:heading>
+        <div class="flex items-center gap-4">
+            <flux:heading size="xl" level="1" class="!font-bold tracking-tight">Forms</flux:heading>
+            @if (auth()->user()->hasRole('admin'))
+                <select wire:model.live="selectedUserId"
+                    class="px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-600
+                           bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300
+                           focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer">
+                    <option value="">All Users</option>
+                    @foreach ($users as $user)
+                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                    @endforeach
+                </select>
+            @endif
+        </div>
         <div class="flex items-center gap-2">
             @if ($formsData->isNotEmpty() && auth()->user()->hasPermission('forms.import'))
                 <flux:button icon="plus" variant="ghost" wire:click="$dispatch('openAppendModal')">
@@ -109,11 +122,26 @@
                             <flux:button variant="ghost" size="xs" icon="arrow-down-tray" circle
                                 wire:click="export({{ $form->id }})" title="Export to Excel" />
                         @endif
+                        @if (auth()->user()->hasRole('admin'))
+                            <flux:button variant="ghost" size="xs" icon="pencil-square" circle
+                                wire:click="openEditModal({{ $form->id }})" title="Edit form" />
+                        @endif
                         <flux:button variant="ghost" size="xs" icon="adjustments-horizontal" circle
                             wire:click="openColumnMenu({{ $form->id }})" title="Manage columns" />
-                        <flux:button variant="ghost" size="xs" icon="trash" circle
-                            wire:click="confirmDelete({{ $form->id }})" />
+                        @if (auth()->user()->hasRole('admin'))
+                            <flux:button variant="ghost" size="xs" icon="trash" circle
+                                wire:click="confirmDelete({{ $form->id }})" />
+                        @endif
                     </div>
+                </div>
+
+                {{-- Search filter --}}
+                <div class="mb-4">
+                    <input type="text" placeholder="Search table..."
+                        wire:model.live="searchQuery.{{ $form->id }}"
+                        class="w-full max-w-sm px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-600
+                               bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 placeholder-zinc-400
+                               focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-transparent" />
                 </div>
 
                 {{-- Status filter pills --}}
@@ -201,7 +229,8 @@
                         <tbody>
                             @forelse ($entries as $i => $entry)
                                 <tr wire:key="entry-{{ $entry->id }}"
-                                    class="border-b border-zinc-100 dark:border-zinc-700/50 hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors">
+                                    class="border-b border-zinc-100 dark:border-zinc-700/50 hover:bg-zinc-50 dark:hover:bg-zinc-700/30 transition-colors
+                                           {{ $i % 2 === 0 ? 'bg-white dark:bg-zinc-800' : 'bg-zinc-50 dark:bg-zinc-700/40' }}">
 
                                     <td class="px-3 py-2 text-center text-xs text-zinc-400 border-r border-zinc-200 dark:border-zinc-700 select-none">
                                         {{ $i + 1 }}
@@ -217,7 +246,8 @@
                                             </td>
                                         @elseif ($item['type'] === 'status')
                                             @php $selectedStatus = $statuses->firstWhere('id', $entry->status_id); @endphp
-                                            <td class="px-3 py-1.5 border-r border-zinc-100 dark:border-zinc-700/50">
+                                            <td class="px-3 py-1.5 border-r border-zinc-100 dark:border-zinc-700/50
+                                                       {{ $i % 2 === 0 ? 'bg-white dark:bg-zinc-800 hover:!bg-white dark:hover:!bg-zinc-800' : 'bg-zinc-50 dark:bg-zinc-700/40 hover:!bg-zinc-50 dark:hover:!bg-zinc-700/40' }}">
                                                 @if ($statuses->isEmpty())
                                                     <span class="text-xs text-zinc-400 italic">No statuses —
                                                         <a href="{{ route('statuses.index') }}" wire:navigate class="underline">create some</a>
@@ -233,7 +263,7 @@
                                                             class="text-xs rounded-lg px-2 py-1 border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer">
                                                             <option value="">— none —</option>
                                                             @foreach ($statuses as $status)
-                                                                <option value="{{ $status->id }}" @selected($entry->status_id === $status->id)>
+                                                                <option value="{{ $status->id }}" @selected($entry->status_id === $status->id) style="background-color: {{ $status->color }} !important; color: white !important; background-image: none; appearance: none;">
                                                                     {{ $status->name }}
                                                                 </option>
                                                             @endforeach
@@ -339,6 +369,44 @@
             <flux:spacer />
             <flux:button variant="ghost" wire:click="$set('showDeleteModal', false)">Cancel</flux:button>
             <flux:button variant="danger" wire:click="deleteForm">Delete</flux:button>
+        </div>
+    </flux:modal>
+
+    {{-- ── Edit Modal ───────────────────────────────────────────────────── --}}
+    <flux:modal wire:model="showEditModal" class="md:w-[400px] space-y-5">
+        <div>
+            <flux:heading size="lg">Edit Form</flux:heading>
+            <flux:subheading>Update form details.</flux:subheading>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Form Name</label>
+                <input type="text" wire:model="editFormName"
+                    class="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-600
+                           bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300
+                           focus:outline-none focus:ring-1 focus:ring-blue-400" />
+            </div>
+
+            @if (auth()->user()->hasRole('admin'))
+                <div>
+                    <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Assign to User</label>
+                    <select wire:model="editFormOwnerId"
+                        class="w-full mt-1 px-3 py-2 text-sm rounded-lg border border-zinc-200 dark:border-zinc-600
+                               bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300
+                               focus:outline-none focus:ring-1 focus:ring-blue-400 cursor-pointer">
+                        @foreach ($allUsers as $user)
+                            <option value="{{ $user->id }}">{{ $user->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
+        </div>
+
+        <div class="flex gap-2">
+            <flux:spacer />
+            <flux:button variant="ghost" wire:click="$set('showEditModal', false)">Cancel</flux:button>
+            <flux:button variant="primary" wire:click="saveFormChanges">Save</flux:button>
         </div>
     </flux:modal>
 

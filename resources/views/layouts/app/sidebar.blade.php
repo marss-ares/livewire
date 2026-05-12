@@ -8,6 +8,7 @@
 <body class="min-h-screen bg-white dark:bg-zinc-800">
     <flux:sidebar sticky collapsible="mobile"
         class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+
         <flux:sidebar.header>
             <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
             <flux:sidebar.collapse class="lg:hidden" />
@@ -15,16 +16,17 @@
 
         <flux:sidebar.nav>
             <flux:sidebar.group :heading="__('Platform')" class="grid">
+                <!-- Dashboard: Indigo -->
                 <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')"
-                    wire:navigate>
+                    wire:navigate class="text-indigo-600 dark:text-indigo-400">
                     {{ __('Dashboard') }}
                 </flux:sidebar.item>
 
+                <!-- Forms: Chihlimbar (Amber) -->
                 <flux:sidebar.item icon="document-text" :href="route('forms.index')"
-                    :current="request()->routeIs('forms.*')" wire:navigate>
+                    :current="request()->routeIs('forms.*')" wire:navigate class="text-amber-600 dark:text-amber-400">
                     {{ __('Forms') }}
                 </flux:sidebar.item>
-
             </flux:sidebar.group>
         </flux:sidebar.nav>
 
@@ -32,27 +34,30 @@
 
         <flux:sidebar.nav>
             @if (auth()->user()->hasPermission('users.view'))
+                <!-- Users: Albastru -->
                 <flux:sidebar.item icon="user-group" :href="route('users.index')"
-                    :current="request()->routeIs('users.index')" wire:navigate>
+                    :current="request()->routeIs('users.index')" wire:navigate class="text-blue-600 dark:text-blue-400">
                     {{ __('Users') }}
                 </flux:sidebar.item>
             @endif
 
             @if (auth()->user()->hasPermission('roles.view'))
+                <!-- Roles: Violet -->
                 <flux:sidebar.item icon="shield-check" :href="route('roles.index')"
-                    :current="request()->routeIs('roles.index')" wire:navigate>
+                    :current="request()->routeIs('roles.index')" wire:navigate
+                    class="text-purple-600 dark:text-purple-400">
                     {{ __('Roles') }}
                 </flux:sidebar.item>
             @endif
 
             @if (auth()->user()->hasRole('admin'))
+                <!-- Statuses: Verde/Emerald -->
                 <flux:sidebar.item icon="tag" :href="route('statuses.index')"
-                    :current="request()->routeIs('statuses.*')" wire:navigate>
+                    :current="request()->routeIs('statuses.*')" wire:navigate
+                    class="text-emerald-600 dark:text-emerald-400">
                     {{ __('Statuses') }}
                 </flux:sidebar.item>
             @endif
-
-
         </flux:sidebar.nav>
 
         <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
