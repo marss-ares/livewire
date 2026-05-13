@@ -61,18 +61,15 @@
         </div>
 
         {{-- ── Active form content ──────────────────────────────────────────── --}}
-        @foreach ($formsData as $data)
-            @if ($data['form']->id !== $activeFormId)
-                @continue
-            @endif
+        @if ($activeFormData)
             @php
-                $form         = $data['form'];
-                $items        = $data['items'];
-                $entries      = $data['entries'];
-                $sort         = $data['sort'];
-                $activeFilter = $data['activeFilter'];
-                $dateFrom     = $data['dateFrom'];
-                $dateTo       = $data['dateTo'];
+                $form         = $activeFormData['form'];
+                $items        = $activeFormData['items'];
+                $entries      = $activeFormData['entries'];
+                $sort         = $activeFormData['sort'];
+                $activeFilter = $activeFormData['activeFilter'];
+                $dateFrom     = $activeFormData['dateFrom'];
+                $dateTo       = $activeFormData['dateTo'];
             @endphp
 
             <div wire:key="form-{{ $form->id }}">
@@ -293,7 +290,7 @@
                     </table>
                 </div>
             </div>
-        @endforeach
+        @endif
 
     @endif
 

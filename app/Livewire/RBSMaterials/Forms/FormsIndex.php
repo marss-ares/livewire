@@ -407,12 +407,15 @@ class FormsIndex extends Component
             }
         }
 
-        if ($this->activeFormId === null && $formsData->isNotEmpty()) {
-            $this->activeFormId = $formsData->first()['form']->id;
+        $validIds = $formsData->pluck('form.id')->all();
+        if (!in_array($this->activeFormId, $validIds)) {
+            $this->activeFormId = $formsData->first()['form']->id ?? null;
         }
+
+        $activeFormData = $formsData->firstWhere('form.id', $this->activeFormId);
 
         $allUsers = User::orderBy('name')->get();
 
-        return view('RBSMaterials.Forms.form-index', compact('formsData', 'statuses', 'menuItems', 'users', 'allUsers'));
+        return view('RBSMaterials.Forms.form-index', compact('formsData', 'statuses', 'menuItems', 'users', 'allUsers', 'activeFormData'));
     }
 }
